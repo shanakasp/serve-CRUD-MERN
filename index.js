@@ -25,12 +25,17 @@ try {
 } catch (error) {
   console.error("Error connecting to MongoDB:", error);
 }
+
+app.get("/", (req, res) => {
+  UserModel.find({})
+    .then((users) => res.json(users))
+    .catch((err) => res.json(err));
+});
+
 app.post("/createUser", (req, res) => {
-  app.post("/createUser", (req, res) => {
-    UserModel.create(req.body)
-      .then((users) => res.json(users))
-      .catch((err) => res.json(err));
-  });
+  UserModel.create(req.body)
+    .then((users) => res.json(users))
+    .catch((err) => res.json(err));
 });
 
 app.listen(3001, () => {
