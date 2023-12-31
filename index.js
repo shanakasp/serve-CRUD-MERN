@@ -1,14 +1,14 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const UserModel = require("./models/Users");
+const EmployeeModel = require("./models/Employee");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 try {
-  mongoose.connect("mongodb://127.0.0.1:27017/crud", {
+  mongoose.connect("mongodb://127.0.0.1:27017/employee", {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   });
@@ -22,46 +22,36 @@ try {
   db.once("open", () => {
     console.log("Connected to MongoDB");
   });
+
+  app.listen(3001, () => {
+    console.log("Server Running");
+  });
 } catch (error) {
   console.error("Error connecting to MongoDB:", error);
 }
 
-app.get("/", (req, res) => {
-  UserModel.find({})
-    .then((users) => res.json(users))
+app.post("/login", (req, res) => {
+  const { email, password } = req.body;
+  EmployeeModel.findOne({ email: email })
+    .then((user) => {
+      if (user) {
+        if (user.password === password) {
+          res.json("Success");
+        } else {
+          res.status(401).send("Invalid Password");
+        }
+      } else {
+        res.status(404).send("User not found");
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).send("Internal Server Error");
+    });
+});
+
+app.post("/register", (req, res) => {
+  EmployeeModel.create(req.body)
+    .then((employees) => res.json(employees))
     .catch((err) => res.json(err));
-});
-
-app.post("/createUser", (req, res) => {
-  UserModel.create(req.body)
-    .then((users) => res.json(users))
-    .catch((err) => res.json(err));
-});
-
-app.get("/getUser/:id", (req, res) => {
-  const id = req.params.id;
-  UserModel.findById({ _id: id })
-    .then((users) => res.json(users))
-    .catch((err) => res.json(err));
-});
-
-app.put("/updateUser/:id", (req, res) => {
-  const id = req.params.id;
-  UserModel.findByIdAndUpdate(
-    { _id: id },
-    { name: req.body.name, email: req.body.email, age: req.body.age }
-  )
-    .then((user) => res.json(user))
-    .catch((err) => res.json({ error: err.message }));
-});
-
-app.delete("/deleteUser/:id", (req, res) => {
-  const id = req.params.id;
-  UserModel.findByIdAndDelete({ _id: id })
-    .then((res) => res.json(res))
-    .catch((err) => res.json(err));
-});
-
-app.listen(3001, () => {
-  console.log("Server Running");
 });
